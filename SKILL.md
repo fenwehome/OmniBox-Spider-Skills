@@ -1,15 +1,15 @@
 ---
 name: omnibox-spider
 description: |-
-  Develop, write, debug, and improve OmniBox spider sources (爬虫源). Use when the user asks to write an OmniBox spider script (JS or Python), create a new spider source, fix or debug an existing OmniBox source, convert a third-party video site API into an OmniBox spider, or ask questions about OmniBox spider development (API, SDK, annotations, return formats, etc.). Also triggers on phrases like 写爬虫, OmniBox 爬虫, 爬虫源, spider source, OmniBox 脚本, 帮我写采集站脚本.
+  Develop, write, debug, and improve OmniBox spider sources (爬虫源). Use when the user asks to write an OmniBox spider script (JS or Python), create a new spider source, fix or debug an existing OmniBox source, convert a third-party video site API into an OmniBox spider, or ask questions about OmniBox spider development (API, SDK, annotations, return formats, environment variables, etc.). Also triggers on phrases like 写爬虫, OmniBox 爬虫, 爬虫源, spider source, OmniBox 脚本, 帮我写采集站脚本.
 ---
 
 # OmniBox Spider Skill
 
 > skill_meta
-> - last_updated: 2026-03-22 00:33 Asia/Shanghai
+> - last_updated: 2026-03-23 18:10 Asia/Shanghai
 > - source_docs: https://omnibox-doc.pages.dev/spider-development/introduction.html
-> - source_scope: introduction + getting-started + script-annotation-attributes + api-reference + javascript-sdk + python-sdk
+> - source_scope: introduction + getting-started + script-annotation-attributes + api-reference + javascript-sdk + python-sdk + repo env scan
 > - sync_note: 每次改动后如需分发，应重新打包 skill 文件
 
 用于开发、编写、调试和改进 OmniBox 爬虫源。优先遵循最新官方文档：
@@ -85,6 +85,66 @@ description: |-
 - 返回数量
 - 失败原因
 
+### 7) 环境变量优先复用现有命名（强制）
+写新脚本时，先查已有变量，再决定是否新增：
+- 普通采集站 API → 优先 `SITE_API`
+- 弹幕接口 → 优先 `DANMU_API`
+- 网盘优先级 → 优先 `DRIVE_ORDER`
+- 网盘类型配置 → 优先 `DRIVE_TYPE_CONFIG`
+- 源名称映射 → 优先 `SOURCE_NAMES_CONFIG`
+- PanCheck / 盘搜 → 优先 `PANCHECK_*`、`PANSOU_*`
+- Emby → 优先 `EMBY_*`
+- 小雅 / AList / TVBox → 优先 `XIAOYA_*`、`ALIST_TVBOX_TOKEN`
+- 站点地址配置 → 优先沿用已有 `XXX_HOST` 风格
+
+如果确实要新增变量，必须：
+1. 命名清晰
+2. 与现有变量不冲突
+3. 在交付说明里解释为什么不能复用旧变量名
+
+### 8) 每次改脚本后必须升级 `@version`（强制）
+无论是修 bug、加功能、改排序、改刮削、改弹幕、改播放历史、改环境变量逻辑，只要脚本有变化，就必须同步升级 `@version`。
+
+默认规则：
+- 小修复 / 不改主要行为 → 升 **patch**（如 `1.1.1 -> 1.1.2`）
+- 新功能 / 明显增强 / 兼容旧配置 → 升 **minor**（如 `1.1.1 -> 1.2.0`）
+- 破坏兼容 / 大改结构 / 需要重配 → 升 **major**（如 `1.1.1 -> 2.0.0`）
+
+以后只要我帮你改 OmniBox 脚本，默认都要：
+1. 检查并修改 `@version`
+2. 在交付说明中说明为什么升 patch / minor / major
+
+### 9) 每次改脚本后必须做静态检查（强制）
+每次修改完成后，至少做一次静态检查，最低要求是脚本在语法/编译层面正常：
+- JavaScript → `node --check script.js`
+- Python → `python3 -m py_compile script.py`
+
+这一步是交付前必做项。不能只凭肉眼判断“看起来没问题”。
+
+如果条件允许，还应顺手检查：
+1. 关键变量是否误删
+2. 新逻辑是否插在正确函数中
+3. `@version` 是否已同步升级
+
+### 10) 每次改脚本后必须做关键路径回归检查（强制）
+静态检查通过后，仍需检查关键运行路径是否被破坏。至少确认：
+- `detail()` 返回结构正常
+- `vod_play_sources` 在有数据时非空
+- `play()` 返回 `urls`
+- 关键环境变量没有被误删（如 `SOURCE_NAMES_CONFIG`）
+
+### 11) 默认采用“最小改动”策略（强制）
+修改 OmniBox 脚本时，默认遵循：
+1. 先复制副本再改，尽量不碰源文件
+2. 一次只解决一个明确目标
+3. 不顺手重构无关逻辑
+4. patch 前先确认插入锚点存在
+
+### 12) 并发优化默认策略
+- `play()`：可将播放地址链路与元数据/弹幕链路并行，优先保证主播放链路成功。
+- `detail()`：默认不要全量 `Promise.all` 打满，优先使用限并发（建议 4）。
+- 元数据、弹幕、刮削增强链路失败时，应尽量降级，不阻塞主链路返回。
+
 ## 常见开发策略
 
 ### 普通采集站
@@ -137,6 +197,23 @@ description: |-
 读：
 - `references/introduction.md`
 
+### 需要复用仓库既有环境变量
+读：
+- `references/environment-variables.md`
+- `references/environment-variables-cheatsheet.md`
+
+### 需要判断这次该升哪个版本号
+读：
+- `references/versioning.md`
+
+### 需要确认修改后至少语法/编译正常
+读：
+- `references/validation.md`
+
+### 需要读取实战经验与防回归规则
+读：
+- `references/lessons-learned.md`
+
 ## 重要提醒
 
 - 环境变量：
@@ -152,6 +229,7 @@ description: |-
 当用户让你“写 OmniBox 爬虫”：
 - 默认直接给出可运行脚本
 - 标明需要的环境变量
+- 优先复用现有环境变量命名
 - 标明注释属性
 - 如果站点存在不确定字段，明确写 TODO / fallback
 - 必要时附带调试建议，但不要长篇空谈
