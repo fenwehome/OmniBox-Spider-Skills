@@ -7,9 +7,9 @@ description: |-
 # OmniBox Spider Skill
 
 > skill_meta
-> - last_updated: 2026-03-23 18:10 Asia/Shanghai
+> - last_updated: 2026-03-27 13:26 Asia/Shanghai
 > - source_docs: https://omnibox-doc.pages.dev/spider-development/introduction.html
-> - source_scope: introduction + getting-started + script-annotation-attributes + api-reference + javascript-sdk + python-sdk + repo env scan
+> - source_scope: introduction + getting-started + script-annotation-attributes + api-reference + sdk + repo env scan
 > - sync_note: 每次改动后如需分发，应重新打包 skill 文件
 
 用于开发、编写、调试和改进 OmniBox 爬虫源。优先遵循最新官方文档：
@@ -181,6 +181,10 @@ description: |-
 读：
 - `references/script-annotation-attributes.md`
 
+### 需要统一查看官方 SDK 能力（推荐）
+读：
+- `references/sdk-api.md`
+
 ### 写 JavaScript 爬虫
 读：
 - `references/javascript-sdk.md`
@@ -216,6 +220,7 @@ description: |-
 
 ## 重要提醒
 
+- 官方最新文档在爬虫开发部分已收拢为：`introduction / getting-started / script-annotation-attributes / api-reference / sdk`，后续同步时优先按这 5 个页面校准。
 - 环境变量：
   - JS 优先 `process.env.KEY`
   - Python 优先 `os.environ.get("KEY")`
@@ -223,6 +228,7 @@ description: |-
 - 文档里明确了 `context` 是 Runner 注入，不要自己发明额外调用方式
 - `vod_tag: "folder"` 是目录项，不是播放项
 - UZ 端有 `search: 1` 这种专用字段，必要时才加
+- `@version / @downloadURL / @indexs / @push / @dependencies` 是当前官方明确说明会被后端实际解析的注释属性；不要凭印象扩展“还有别的也会生效”。
 
 ## 交付风格
 
