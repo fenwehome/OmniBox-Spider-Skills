@@ -117,7 +117,6 @@ git clone https://github.com/Silent1566/OmniBox-Spider-Skills.git
 
 ## 友情链接
 
-- 官方文档：https://omnibox-doc.pages.dev/
 - 第三方源仓库：https://github.com/Silent1566/OmniBox-Spider
 
 ## Star History
